@@ -48,29 +48,6 @@ class Rules:
             yield node.getAttribute("name")
 
 
-def validate(doc):
-    logger = logging.getLogger(__name__)
-
-    root = doc.documentElement
-    for attr in ('width', 'height'):
-        if not root.hasAttribute(attr):
-            logger.error("Attribute '%s' missing or root node", attr)
-
-    attr = "viewBox"
-    if not root.hasAttribute(attr):
-        logger.warning(
-            "Attribute '%s' missing or empty in root node. "
-            "This is required for S60 3rd Edition FP1 or older.", attr)
-
-    image_nodes = doc.getElementsByTagName("image")
-    if image_nodes:
-        logger.warning(
-            "Found %s raster 'image' element(s). "
-            "Quality may not be optimal.", len(image_nodes))
-
-    return doc
-
-
 def get_attributes(node):
     nodemap = node.attributes
     for index in range(nodemap.length):
@@ -198,7 +175,9 @@ def remove_empty_nodes(svgt_doc):
 
 def convert(fp):
     doc = xml.dom.minidom.parse(fp)
-    doc = validate(doc)
+    if doc.documentElement.nodeName != "svg":
+        ValueError("Root element is not 'svg', are you sure this is an SVG file?")
+
     doc = css.convert_stylesheets(doc)
     doc = convert_nodes(doc)
     convert_gradients(doc)
