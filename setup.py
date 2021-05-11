@@ -10,9 +10,8 @@ setuptools.setup(
     author_email="holthuis.jan@googlemail.com",
     url='https://github.com/Holzhaus/svgtinyconverter',
     platforms=('Any'),
-    install_requires=['tinycss>=0.4'],
     packages=setuptools.find_packages(),
-    zip_safe=True,
+    zip_safe=False,
     entry_points={
         'console_scripts': [
            'svgtinyconverter = svgtinyconverter:main'
