@@ -161,8 +161,17 @@ def convert_fills(svgt_doc):
                     node.setAttribute(attr, value.replace(matchobj.group(1), "").strip())
 
 
-def convert_paths(svgt_doc):
-    pass
+def convert_paths(doc):
+    for node in walk_nodes(doc.documentElement):
+        if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+
+        if node.nodeName != "path":
+            continue
+
+        path_commands = node.getAttribute("d")
+        if "a" in path_commands.lower():
+            raise NotImplementedError("Sorry, conversion of elliptical arc is not implemented yet.")
 
 
 def remove_empty_nodes(svgt_doc):
