@@ -8,6 +8,8 @@ import xml.dom.minidom
 import bs4
 import tinycss.css21
 
+from . import css
+
 
 class Rules:
     def __init__(self, fp):
@@ -46,65 +48,27 @@ class Rules:
             yield node.getAttribute("name")
 
 
-def validate(soup):
+def validate(doc):
     logger = logging.getLogger(__name__)
 
-    root = soup.contents[0]
+    root = doc.documentElement
     for attr in ('width', 'height'):
-        if not root.has_attr(attr):
+        if not root.hasAttribute(attr):
             logger.error("Attribute '%s' missing or root node", attr)
 
     attr = "viewBox"
-    if not root.has_attr(attr):
-        logger.warning("Attribute '%s' missing or empty in root node. This is required for S60 3rd Edition FP1 or older.", attr)
+    if not root.hasAttribute(attr):
+        logger.warning(
+            "Attribute '%s' missing or empty in root node. "
+            "This is required for S60 3rd Edition FP1 or older.", attr)
 
-    image_nodes = soup.find_all("image")
+    image_nodes = doc.getElementsByTagName("image")
     if image_nodes:
-        logger.warning("Found %s raster 'image' element(s). Quality may not be optimal.", len(image_nodes))
+        logger.warning(
+            "Found %s raster 'image' element(s). "
+            "Quality may not be optimal.", len(image_nodes))
 
-    return soup
-
-
-def convert_stylesheets(soup):
-    css = []
-    for elem in soup.find_all("style"):
-        css.append(elem.string.strip())
-        elem.extract()
-
-    parser = tinycss.css21.CSS21Parser()
-    stylesheet = parser.parse_stylesheet("\n".join(css))
-
-    for rule in stylesheet.rules:
-        selector = rule.selector.as_css()
-        declarations = {d.name: d.value.as_css() for d in rule.declarations}
-        for element in soup.select(selector):
-            element_style = {}
-            for decl in element.attrs.get("style", "").split(";"):
-                name, sep, value = decl.partition(":")
-                if name and value:
-                    element_style[name.strip()] = value.strip()
-            element_style.update(declarations)
-            element.attrs.update(element_style)
-            #element.attrs["style"] = ";".join(
-            #    f"{name}:{value}" for name, value in element_style.items()
-            #)
-
-    for rule in stylesheet.rules:
-        selector = rule.selector.as_css()
-        for element in soup.select(selector):
-            if "class" in element.attrs:
-                del element.attrs["class"]
-
-            if "style" in element.attrs:
-                del element.attrs["style"]
-
-    for elem in soup.find_all(lambda tag: "style" in tag.attrs):
-        for decl in elem.attrs["style"].split(";"):
-            name, sep, value = decl.partition(":")
-            if name and value:
-                elem.attrs[name.strip()] = value.strip()
-        del elem.attrs["style"]
-    return soup
+    return doc
 
 
 def get_attributes(node):
@@ -113,10 +77,9 @@ def get_attributes(node):
         yield nodemap.item(index)
 
 
-def convert_nodes(soup):
+def convert_nodes(svg_doc):
     impl = xml.dom.minidom.getDOMImplementation()
     svgt_doc = impl.createDocument("http://www.w3.org/2000/svg", "svg", None)
-    svg_doc = xml.dom.minidom.parseString(str(soup))
 
     with importlib.resources.open_text(__package__, "rules.xml") as f:
         rules = Rules(f)
@@ -236,10 +199,10 @@ def remove_empty_nodes(svgt_doc):
 
 
 def convert(fp):
-    soup = bs4.BeautifulSoup(fp, "xml")
-    validate(soup)
-    convert_stylesheets(soup)
-    doc = convert_nodes(soup)
+    doc = xml.dom.minidom.parse(fp)
+    doc = validate(doc)
+    doc = css.convert_stylesheets(doc)
+    doc = convert_nodes(doc)
     convert_gradients(doc)
     convert_opacity(doc)
     convert_paths(doc)
