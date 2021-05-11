@@ -161,6 +161,28 @@ def convert_fills(svgt_doc):
                     node.setAttribute(attr, value.replace(matchobj.group(1), "").strip())
 
 
+def convert_tspans(doc):
+    for node in walk_nodes(doc.documentElement):
+        if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+
+        if node.nodeName != "tspan":
+            continue
+
+        if node.hasAttribute("x") or node.hasAttribute("y"):
+            parentNode = node.parentNode
+            while parentNode.tagName != "text":
+                parentNode = parentNode.parentNode
+
+            for attr in ("x", "y"):
+                if node.hasAttribute(attr):
+                    parentNode.setAttribute(attr, node.getAttribute(attr))
+
+            for child in node.childNodes:
+                node.parentNode.insertBefore(child.cloneNode(deep=True), node)
+            node.parentNode.removeChild(node)
+
+
 def convert_paths(doc):
     for node in walk_nodes(doc.documentElement):
         if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
@@ -189,6 +211,7 @@ def convert(fp):
 
     doc = css.convert_stylesheets(doc)
     doc = convert_nodes(doc)
+    convert_tspans(doc)
     convert_gradients(doc)
     convert_opacity(doc)
     convert_paths(doc)
