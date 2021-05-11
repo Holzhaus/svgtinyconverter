@@ -184,6 +184,7 @@ def convert_tspans(doc):
 
 
 def convert_paths(doc):
+    logger = logging.getLogger(__name__)
     for node in walk_nodes(doc.documentElement):
         if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
             continue
@@ -193,7 +194,7 @@ def convert_paths(doc):
 
         path_commands = node.getAttribute("d")
         if "a" in path_commands.lower():
-            raise NotImplementedError("Sorry, conversion of elliptical arc is not implemented yet.")
+            logger.error("Conversion of elliptical arcs is not implemented!")
 
 
 def remove_empty_nodes(svgt_doc):
