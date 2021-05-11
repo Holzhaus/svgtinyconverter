@@ -246,21 +246,3 @@ def convert(fp):
     convert_fills(doc)
     remove_empty_nodes(doc)
     return doc
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("file", type=argparse.FileType("r+"))
-    args = parser.parse_args(argv)
-
-    logging.basicConfig()
-
-    doc = convert(args.file)
-    args.file.seek(0)
-    args.file.truncate()
-    args.file.write(doc.toxml())
-
-
-
-if __name__ == "__main__":
-    main()
