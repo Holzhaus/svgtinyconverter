@@ -29,6 +29,10 @@ def validate(doc, schema=None):
             "Quality may not be optimal.", len(image_nodes))
 
     if schema is not None:
-        tree = lxml.etree.fromstring(doc.toxml())
-        schema.assertValid(tree)
+        data = doc.toprettyxml().strip()
+        tree = lxml.etree.fromstring(data)
+        if not schema.validate(tree):
+            print(data)
+            schema.assertValid(tree)
+
         logger.info("Document passed schema validation.")
