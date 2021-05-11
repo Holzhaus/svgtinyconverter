@@ -383,6 +383,7 @@
 			<attribute name="style"/>
 		</element>
 		<element name="svg">
+			<attribute name="baseProfile"/>
 			<attribute name="xmlns:xlink"/>
 			<attribute name="display"/>
 			<attribute name="stroke-dashoffset"/>

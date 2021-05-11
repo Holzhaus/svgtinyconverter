@@ -84,17 +84,15 @@ def convert_nodes(svg_doc):
     with importlib.resources.open_text(__package__, "rules.xml") as f:
         rules = Rules(f)
 
-    for attr in get_attributes(svg_doc.documentElement):
-        if not rules.is_acceptable_attribute(svg_doc.documentElement.nodeName, attr.name):
-            continue
-
+    temp_svgt_root = clean_node(svgt_doc, rules, svg_doc.documentElement)
+    for attr in get_attributes(temp_svgt_root):
         svgt_doc.documentElement.setAttribute(attr.name, attr.value)
 
-    svgt_doc.documentElement.setAttribute("baseProfile", "tiny")
-
-    temp_svgt_root = clean_node(svgt_doc, rules, svg_doc.documentElement)
     for child in temp_svgt_root.childNodes:
         svgt_doc.documentElement.appendChild(child.cloneNode(deep=True))
+
+    svgt_doc.documentElement.setAttribute("version", "1.2")
+    svgt_doc.documentElement.setAttribute("baseProfile", "tiny")
 
     return svgt_doc
 
